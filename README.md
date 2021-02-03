@@ -1,65 +1,19 @@
-<p align="center"><img width="40%" src="logo-Tengine.png" /></p>
-
-# Tengine Overview
-
-[![GitHub license](http://OAID.github.io/pics/apache_2.0.svg)](./LICENSE) [![Build Status](https://img.shields.io/github/workflow/status/OAID/Tengine/Tengine-Actions)](https://github.com/OAID/Tengine/actions?query=workflow%3ATengine-Actions) [![Test Status](https://img.shields.io/travis/OAID/Tengine/master?label=test)](https://travis-ci.org/OAID/Tengine)
 
 
 
-**Tengine**, developed by **OPEN** AI LAB, is an AI application development platform for AIoT scenarios launched by OPEN AI LAB, which is dedicated to solving the fragmentation problem of aiot industrial chain and accelerating the landing of AI industrialization. Tengine is specially designed for AIoT scenarios, and it has several features, such as cross platform, heterogeneous scheduling, chip bottom acceleration, ultra light weight and independent, and complete development and deployment tool chain. Tengine is compatible with a variety of operating systems and deep learning algorithm framework, which simplifies and accelerates the rapid migration of scene oriented AI algorithm on embedded edge devices, as well as the actual application deployment;
+## Tengine 增加华为atlas npu做infer接口使用
+## 只需prototxt配置就可完成CPU、NPU之间切换，多个模型之间串并联系
 
-Tengine is composed of five modules: **core/operator/serializer/executor/driver**.
+## 基于tengine的版本是git clone for tengine master 9f963f1db81b54ff59c3f980b240d275e1e1f12c
 
-- [**core**](core)  provides the basic components and functionalities of the system.
-- [**operator**](operator)  defines the schema of operators, such as convolution, relu, pooling, etc. al. Here is the current support [**operator list**](https://github.com/OAID/Tengine/wiki/Tengine-Support-Operators-List).
-- [**serializer**](serializer)  is to load the saved model. The serializer framework is extensible to support different format, including the customized one. Caffe/ONNX/Tensorflow/MXNet and Tengine models can be loaded directly by Tengine.
-- [**executor**](executor)  implements the code to run graph and operators. Current version provides a highly optimized implementation for multi A72 cores.
-- [**driver**](driver)  is the adapter of real H/W and provides service to device executor by HAL API. It is possible for single driver to create multiple devices.
+### 注册一个op为atlas, 插入到caffe model的prototxt中，atlas op会执行华为atlas加速卡
+### 非atlas op的node依旧在服务器的CPU上执行，这样一个prototxt可以无缝在CPU和NPU之间切换
 
+### 更方便的是一个prototxt里面可以包含多个子模型的无缝对接
 
-## Build and Install
-please refer to [Wiki](https://github.com/OAID/Tengine/wiki)
+### 类似扩展下去可以整洁的支持更多的NPU，目前只是那华为atlas试水
 
-## Tengine examples and model zoo
+#### 贴一下增加一个op需要的改动，作为后来扩展的参考，sha1是9f3e0fae3137d420ff7afa8791ea77ec2b10d48f
+#### https://github.com/wangshankun/Tengine_Atlas/commit/9f3e0fae3137d420ff7afa8791ea77ec2b10d48f
 
-please visit [examples](https://github.com/OAID/Tengine/tree/master/examples) for demos on classification/detection and download models from [**Tengine model zoo**](https://pan.baidu.com/s/1Ar9334MPeIV1eq4pM1eI-Q) (psw: hhgc)
-
-[**tengine applications**](https://github.com/OAID/Tengine-app) is a project for sharing android/linux applications powered by Tengine  
-
-
-
-## Communication && Tech Support
-* Github issues
-* QQ group: 829565581 (Question:Tengine  Answer:openailab)
-* email: Support@openailab.com
-* Tengine Community: http://www.tengine.org.cn/
-
-
-
-## Benchmark
-
-Test on RK3399-1*A72 
-
-| Model           | fp32    | int8-hybrid | int8-e2e |
-| --------------- | ------- | ----------- | -------- |
-| Squeezenet v1.1 | 55.3ms  | 48.6ms      | 44.6ms   |
-| Mobilenet v1    | 108.7ms | 74.6ms      | 64.2ms   |
-
-More Benchmark data to be added.
-
-
-## Roadmap
-
-2020.5 updated
-
-##### Feature
-
-- [ ] More examples
-- [ ] Web-based convert tool
-- [ ] CV API
-- [ ] Support more ops of ONNX(PyTorch)
-
-
-##### Optimization
-
-- [ ] arm v8.2 fp16 perf ops
+<p align="center"><img width="40%" src="增加一个npu支持的op插件需要的改动.jpg" /></p>
