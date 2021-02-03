@@ -56,7 +56,7 @@ option(CONFIG_HCL_RELEASE  "HCL RELEASE" OFF)
 option(CONFIG_AUTHED_FAILED_NOT_WORK  "AUTHED FAIELD TENGINE DO NOT WORK" OFF)
 option(CONFIG_ACL_OPENCL  "Build Tengine module" OFF)
 option(CONFIG_BUILD_CONVERT_TOOLS  "Build Tools" OFF)
-option(CONFIG_BUILD_SERIALIZER "build serializer" OFF)
+option(CONFIG_BUILD_SERIALIZER "build serializer" ON)
 
 message(STATUS "CONFIG_ARCH_X86 = ${CONFIG_ARCH_X86}")
 message(STATUS "CONFIG_ARCH_X86_AVX = ${CONFIG_ARCH_X86_AVX}")
@@ -228,8 +228,8 @@ endif()
 
 add_subdirectory(benchmark)
 
-enable_testing()
-add_subdirectory(tests)
+#enable_testing()
+#add_subdirectory(tests)
 add_subdirectory(examples)
 
 ## Configure install directory

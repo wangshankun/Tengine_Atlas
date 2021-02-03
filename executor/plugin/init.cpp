@@ -34,6 +34,7 @@ using namespace TEngine;
 namespace TEngine {
 
 extern void NodeOpsRegistryManagerInit(void);
+extern void RegisterAtlasNodeExec(void);
 
 void DevAllocatorManagerInit(void);
 void DevSchedulerManagerInit(void);
@@ -42,6 +43,8 @@ void DevSchedulerManagerInit(void);
 int executor_plugin_init(void)
 {
     NodeOpsRegistryManagerInit();
+
+    RegisterAtlasNodeExec();
 
     DevAllocatorManagerInit();
     DevSchedulerManagerInit();

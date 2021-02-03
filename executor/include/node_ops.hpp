@@ -263,7 +263,8 @@ struct NodeOpsRegistry
     std::string reg_name;
 };
 
-#define REF_REGISTRY_NAME "reference"
+#define REF_REGISTRY_NAME   "reference"
+#define ATLAS_REGISTRY_NAME "atlas"
 
 class NodeOpsRegistryManager
 {

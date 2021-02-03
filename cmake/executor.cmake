@@ -28,6 +28,10 @@ list(APPEND TOPERATOR_LIB_SRCS ${COMMON_CPP_SRCS})
 list(APPEND TOPERATOR_LIB_SRCS ${REF_CPP_SRCS})
 
 include_directories(driver/cpu)
+
+FILE(GLOB_RECURSE ATLAS_CPP_SRCS executor/operator/atlas/*.cpp)
+list(APPEND TOPERATOR_LIB_SRCS ${ATLAS_CPP_SRCS})
+
 if(CONFIG_ARCH_X86)
     FILE(GLOB_RECURSE ARCH_LIB_CPP_SRCS executor/operator/x86/*.cpp)
     include_directories(executor/operator/x86/include)

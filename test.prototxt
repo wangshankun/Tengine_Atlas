@@ -1,0 +1,80 @@
+name: "mxnet-model"
+layer {
+  name: "data"
+  type: "Input"
+  top: "data"
+  input_param {
+    shape {
+      dim: 1
+      dim: 3
+      dim: 300
+      dim: 300
+    }
+  }
+}
+
+layer {
+  name: "huawei_atlas_inference"
+  type: "Atlas"
+  bottom: "data"
+  top: "fused_project_conv_bn"
+  top: "fused_pooling1"
+  top: "fused_pooling2"
+  top: "fused_pooling3"
+  top: "hybridsequential7_concat3"
+  top: "hybridsequential7_concat2"
+  top: "hybridsequential7_softmax0_flatten"
+  top: "hybridsequential7_softmax1_flatten"
+  atlas_param {
+      model_name: "./test.om"
+      total_output_layer_nums: 8
+      output_shape {
+          dim: 1
+          dim: 256
+          dim: 28
+          dim: 28
+      }
+      output_shape {
+          dim: 1
+          dim: 256
+          dim: 14
+          dim: 14
+      }
+      output_shape {
+          dim: 1
+          dim: 256
+          dim: 7
+          dim: 7
+      }
+      output_shape {
+          dim: 1
+          dim: 256
+          dim: 4
+          dim: 4
+      }
+      output_shape {
+          dim: 1
+          dim: 16720
+          dim: 1
+          dim: 1
+      }
+      output_shape {
+          dim: 1
+          dim: 16720
+          dim: 1
+          dim: 1
+      }
+      output_shape {
+          dim: 1
+          dim: 8360
+          dim: 1
+          dim: 1
+      }
+      output_shape {
+          dim: 1
+          dim: 8360
+          dim: 1
+          dim: 1
+      }
+  }
+}

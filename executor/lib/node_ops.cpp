@@ -298,6 +298,11 @@ NodeOps* NodeOpsRegistryManager::RealFindNodeOps(const CPUInfo* cpu_info, Node* 
     if(ops)
         return ops;
 
+    // search atlas
+    ops = FindNodeOps(ATLAS_REGISTRY_NAME, cpu_info, node);
+    if(ops)
+        return ops;
+
     // the final search: reference
 
     ops = FindNodeOps(REF_REGISTRY_NAME, cpu_info, node);

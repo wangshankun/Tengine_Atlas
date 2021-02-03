@@ -127,6 +127,7 @@
 #include "operator/zeros_like.hpp"
 #include "operator/unsqueeze.hpp"
 #include "operator/yolov3detectionoutput.hpp"
+#include "operator/atlas.hpp"
 using namespace TEngine;
  
 int operator_plugin_init(void)
@@ -233,6 +234,7 @@ int operator_plugin_init(void)
     RegisterOp<ReduceL2>("ReduceL2");
     RegisterOp<Unsqueeze>("Unsqueeze");
     RegisterOp<YOLOV3DetectionOutput>("YOLOV3DetectionOutput");
+    RegisterOp<AtlasNode>("Atlas");
     // std::cout<<"OPERATOR PLUGIN INITED\n";
     return 0;
 }

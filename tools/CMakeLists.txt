@@ -8,7 +8,7 @@ endif()
 
 cmake_minimum_required(VERSION 3.0)
 
-option(CONFIG_CAFFE_SERIALIZER "caffe serializer" OFF)
+option(CONFIG_CAFFE_SERIALIZER "caffe serializer" ON)
 option(CONFIG_ONNX_SERIALIZER "onnx serializer" OFF)
 option(CONFIG_MXNET_SERIALIZER "mxnet serializer" OFF)
 option(CONFIG_TF_SERIALIZER "tensorflow serializer" OFF)
@@ -19,7 +19,7 @@ option(CONFIG_NO_OPT "do not use optimize flag for debugging" OFF)
 option(CONFIG_ACL_OPENCL "build the acl opencl driver" OFF)
 option(CONFIG_BUILD_TEST "build the test programs" OFF)
 option(CONFIG_BUILD_CONVERT_TOOLS "build the test programs" OFF)
-option(CONFIG_BUILD_SERIALIZER "build the test programs" OFF)
+option(CONFIG_BUILD_SERIALIZER "build the test programs" ON)
 
 if(CONFIG_BUILD_CONVERT_TOOLS OR CONFIG_BUILD_SERIALIZER)
     set(CONFIG_CAFFE_SERIALIZER ON)

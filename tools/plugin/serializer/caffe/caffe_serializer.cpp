@@ -78,6 +78,7 @@
 #include "operator/embed.hpp"
 #include "operator/reduction.hpp"
 #include "operator/bias.hpp"
+#include "operator/atlas_param.hpp"
 
 namespace TEngine {
 
@@ -1775,6 +1776,41 @@ static bool LoadBiasBlob(StaticGraph* graph, StaticNode* node, const te_caffe::L
     return true;
 }
 
+
+static bool LoadCaffeAtlas(StaticGraph* graph, StaticNode* node, const te_caffe::LayerParameter& layer_param)
+{
+    AtlasParam param = any_cast<AtlasParam>(OpManager::GetOpDefParam("Atlas"));
+    const te_caffe::AtlasParameter& caffe_param = layer_param.atlas_param();
+    param.model_name = caffe_param.model_name();
+    LOG_INFO() << "LoadCaffeAtlas: model_name="<< param.model_name<<std::endl;
+    param.total_output_layer_nums = caffe_param.total_output_layer_nums();
+    //wait for feature shape input
+    if((int)caffe_param.total_output_layer_nums() != caffe_param.output_shape_size())
+    {
+        LOG_ERROR() << "LoadCaffeAtlas error: total output layer number " << caffe_param.total_output_layer_nums() << " is not equal with output shape number " << caffe_param.output_shape_size() << "\n";
+        return false;
+    }
+    for(int c = 0; c < caffe_param.output_shape_size(); c++)
+    {
+        std::vector<int> dim;
+        const te_caffe::BlobShape& blob_shape = caffe_param.output_shape(c);
+
+        for(int i = 0; i < blob_shape.dim_size(); i++)
+        {
+            dim.push_back(blob_shape.dim(i));
+        }
+        param.output_shape_v.push_back(dim);
+    }
+
+    StaticOp* op = CreateStaticOp(graph, "Atlas");
+
+    SetOperatorParam(op, param);
+
+    SetNodeOp(node, op);
+
+    return true;
+}
+
 bool CaffeSerializerRegisterOpLoader(void)
 {
     SerializerPtr serializer;
@@ -1833,6 +1869,7 @@ bool CaffeSerializerRegisterOpLoader(void)
     p_caffe->RegisterOpLoadMethod("MVN", op_load_t(LoadMVN));
     p_caffe->RegisterOpLoadMethod("Reduction", op_load_t(LoadReduction));
     p_caffe->RegisterOpLoadMethod("Bias", op_load_t(LoadBias));
+    p_caffe->RegisterOpLoadMethod("Atlas",op_load_t(LoadCaffeAtlas));
 
     if(!SerializerManager::SafeGet("caffe", serializer))
         return false;
@@ -1888,6 +1925,7 @@ bool CaffeSerializerRegisterOpLoader(void)
     p_buddy->RegisterOpLoadMethod("MVN", op_load_t(LoadMVN));
     p_buddy->RegisterOpLoadMethod("Reduction", op_load_t(LoadReduction));
     p_buddy->RegisterOpLoadMethod("Bias", op_load_t(LoadBias));
+    p_buddy->RegisterOpLoadMethod("Atlas",op_load_t(LoadCaffeAtlas));
 
     blob_load_map["Convolution"] = LoadConvolutionBlob;
     blob_load_map["Deconvolution"] = LoadDeconvolutionBlob;

@@ -34,15 +34,7 @@ macro (tengine_example name)
     install(TARGETS ${name} DESTINATION examples)
 endmacro()
 
-tengine_example(faster_rcnn_old_api)
-tengine_example(faster_rcnn)
-tengine_example(classification_old_api)
-tengine_example(classification)
-tengine_example(mobilenet_ssd_old_api)
-tengine_example(mobilenet_ssd)
-tengine_example(mobilenetv2_yolov3_old_api)
-tengine_example(retinaface_old_api)
-tengine_example(yufacedetect_old_api)
+tengine_example(atlas_run)
 
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/synset_words.txt DESTINATION examples)

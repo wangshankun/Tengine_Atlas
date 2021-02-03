@@ -436,6 +436,13 @@ message LayerParameter {
   optional TileParameter tile_param = 306;
   optional ShuffleChannelParameter shuffle_channel_param = 307;
   optional InterpParameter interp_param = 308;
+  optional AtlasParameter atlas_param = 7777;
+}
+
+message AtlasParameter {
+  optional string model_name = 1 [default = 'model.om'];
+  optional uint32 total_output_layer_nums = 3 [default = 8];
+  repeated BlobShape output_shape = 4;
 }
 
 message InterpParameter {
