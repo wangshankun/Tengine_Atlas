@@ -54,8 +54,17 @@ public:
         name_ = name;
         op_ = nullptr;
         dynamic_shape_ = false;
+	pDeviceContext_ = nullptr;
     }
 
+    void* GetAttachedDeviceModel(void)
+    {
+        return pDeviceContext_;
+    }
+    void SetAttachedDeviceModel(void* attachedDeviceModel)
+    {
+        pDeviceContext_ = attachedDeviceModel;
+    }
     Operator* GetOp(void) const
     {
         return op_.get();
@@ -341,6 +350,7 @@ protected:
     std::string name_;
     int index_;    // index in seq node list of graph
     bool dynamic_shape_;
+    void* pDeviceContext_;
 };
 
 #define ATTR_CUSTOM_ATTR "CUSTOM_ATTR"

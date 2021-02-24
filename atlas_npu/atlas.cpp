@@ -25,6 +25,8 @@
 #include "atlas800_extern.h"
 #include <algorithm>
 
+#include <mutex>
+
 #define gettid() syscall(__NR_gettid)
 
 #define printf(MESSAGE, args...) { \
@@ -43,14 +45,14 @@ namespace TEngine
 
 namespace AtlasImpl
 {
-
+    
+std::mutex  g_mutex;
 struct AtlasOps : public NodeOps
 {
     HiInterface* net;
     vector<shared_ptr<HiTensor>>  inputTensorVec;
     vector<shared_ptr<HiTensor>>  outputTensorVec;
-    int deviceId = 0;
-    aclrtContext context = nullptr;
+
     
     bool Prerun(Node* node)
     {
@@ -63,12 +65,10 @@ struct AtlasOps : public NodeOps
         std::string dir_path = config_name.substr(0, dir_pos);
 
         InitAcl(dir_path + "/acl.json");
-        AclInitial(deviceId, context);
-
-        AclRtSetCurrentContext(context);
-
+        g_mutex.lock();
         net = new HiInterface(config_name); 
         int ret = net->HiInit(inputTensorVec, outputTensorVec);
+        g_mutex.unlock();
         if (ret != 0) {
             printf("Failed to init \r\n");
             return false;
@@ -79,7 +79,7 @@ struct AtlasOps : public NodeOps
 
     bool Run(Node * node)
     {
-        AclRtSetCurrentContext(context);
+        g_mutex.lock();
         for(int i = 0; i < inputTensorVec.size(); i++)
         {
             inputTensorVec[i]->data = (uint8_t*)malloc(inputTensorVec[i]->len);
@@ -90,12 +90,12 @@ struct AtlasOps : public NodeOps
         }
         
         net->HiForword(inputTensorVec, outputTensorVec, 0);
+        g_mutex.unlock();
         return true;
     }
 
     bool Postrun(Node* node)
     {   //释放内存，销毁npu资源
-        AclRtSetCurrentContext(context);
         for(int i = 0; i < inputTensorVec.size(); i++)
         {
             free(inputTensorVec[i]->data); 
@@ -109,9 +109,6 @@ struct AtlasOps : public NodeOps
         {
             net->HiDestory();
         }
-        
-        AclDestroy(deviceId, context);
-
         ReleaseAcl();
         return true;
     }

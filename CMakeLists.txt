@@ -211,9 +211,13 @@ if(CONFIG_BUILD_CONVERT_TOOLS)
     SET_TARGET_PROPERTIES(tengine-static PROPERTIES OUTPUT_NAME tengine)
 endif()
 
-if( NOT ANDROID)
-    TARGET_LINK_LIBRARIES(tengine -lpthread -ldl)
-endif()
+add_library(atlas800 SHARED IMPORTED)
+set_property(TARGET atlas800 PROPERTY IMPORTED_LOCATION
+             ${CMAKE_CURRENT_SOURCE_DIR}/atlas_npu/lib/dist/libatlas800.so)
+set_property(TARGET atlas800 PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+             ${CMAKE_CURRENT_SOURCE_DIR}/atlas_npu/lib/include)
+
+TARGET_LINK_LIBRARIES(tengine -lpthread -ldl atlas800 -s -fopenmp)
 
 if(BUILD_ALL_IN_STATIC OR BUILD_ALL_IN_ONE)
     ADD_DEPENDENCIES(tengine KERNEL_ASM_TARGET)

@@ -133,18 +133,12 @@ int main(int argc, char *argv[])
     }
     if(device!=nullptr)
     {
-        set_graph_device(graph,device);
+        set_graph_device(graph, device);
     }
     
     //printf("========dump graph==========\n");
     //dump_graph(graph);
 
-    // input
-    int img_h = image_h;
-    int img_w = image_w;
-    int img_size = img_h * img_w * 3;
-    printf("input image w=%d, h=%d\n", img_w, img_h);
-    float *input_data = (float *)malloc(sizeof(float) * img_size);
 
     int node_idx=0;
     int tensor_idx=0;
@@ -155,24 +149,27 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    int dims[] = {1, 3, img_h, img_w};
+    int dims[4] = {0};
+    get_tensor_shape(input_tensor, dims, 4);
+    int img_size = dims[0]*dims[1]*dims[2]*dims[3];
+    printf("input image %d,%d,%d,%d\n", dims[0],dims[1],dims[2],dims[3]);
+    float *input_data = (float *)malloc(sizeof(float) * img_size);
     set_tensor_shape(input_tensor, dims, 4);
+    set_tensor_buffer(input_tensor, input_data, img_size * sizeof(float));
+
     int ret = prerun_graph(graph);
     if(ret != 0)
     {
         std::cout << "Prerun graph failed, errno: " << get_tengine_errno() << "\n";
      //   return 1;
     }
-    printf("============after prerun_graph\n");
+    printf("============after prerun_graph============\n");
+
     int repeat_count = 1;
     const char *repeat = std::getenv("REPEAT_COUNT");
-
     if (repeat)
         repeat_count = std::strtoul(repeat, NULL, 10);
-
 	//warm up
-
-    set_tensor_buffer(input_tensor, input_data, img_size * sizeof(float));
 
     struct timeval t0, t1;
     float total_time = 0.f;
