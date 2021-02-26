@@ -1,0 +1,38 @@
+name: "ocr"
+layer {
+  name: "input_data"
+  type: "Input"
+  top: "data"
+  input_param {
+    shape {
+      dim: 32
+      dim: 3
+      dim: 32
+      dim: 300
+    }
+  }
+}
+
+layer {
+  name: "huawei_atlas_inference"
+  type: "Atlas"
+  bottom: "data"
+  top: "lstm/seq_fc/BiasAdd:0"
+  top: "lstm/ip2:0"
+  atlas_param {
+      model_name: "/root/Tengine_Atlas/cnn_ctc_sx/setup.config"
+      total_output_layer_nums: 2
+      output_shape {
+          dim: 75
+          dim: 1
+          dim: 32
+          dim: 7367
+      }
+      output_shape {
+          dim: 32
+          dim: 75
+          dim: 1
+          dim: 1
+      }
+  }
+}

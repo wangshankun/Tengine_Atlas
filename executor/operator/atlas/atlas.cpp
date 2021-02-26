@@ -25,6 +25,9 @@
 #include "atlas800_extern.h"
 #include <algorithm>
 
+
+#include <assert.h>
+
 #define gettid() syscall(__NR_gettid)
 
 #define printf(MESSAGE, args...) { \
@@ -73,37 +76,64 @@ struct AtlasOps : public NodeOps
             printf("Failed to init \r\n");
             return false;
         }
-        
+
+        for (size_t i = 0; i < node->GetInputNum(); ++i)
+        {
+            const Tensor* input_tensor = node->GetInputTensor(i);
+            const TShape& in_shape = input_tensor->GetShape();
+            uint8_t* input_rawdata = (uint8_t *)get_tensor_mem(input_tensor);
+            auto type_size = DataType::GetTypeSize(input_tensor->GetDataType());
+            int in_n = in_shape.GetN();
+            int in_c = in_shape.GetC();
+            int in_h = in_shape.GetH();
+            int in_w = in_shape.GetW();
+            int in_size = in_c * in_h * in_w * in_n * type_size;
+            assert(in_size  == inputTensorVec[i]->len);
+            //inputTensorVec[i]->data = input_rawdata;//上个node输入放入NPU推理的inputtensor中
+        }
+
+        for(int i = 0; i < node->GetOutputNum(); ++i)
+        {
+            const Tensor* output_tensor = node->GetOutputTensor(i);
+            const TShape& out_shape = output_tensor->GetShape();
+            uint8_t* output_rawdata = (uint8_t *)get_tensor_mem(output_tensor);
+            auto type_size = DataType::GetTypeSize(output_tensor->GetDataType());
+            int out_n = out_shape.GetN();
+            int out_c = out_shape.GetC();
+            int out_h = out_shape.GetH();
+            int out_w = out_shape.GetW();
+            int out_size = out_n* out_c * out_h * out_w * type_size;
+            assert(out_size == outputTensorVec[i]->len);
+	    //outputTensorVec[i]->data = output_rawdata;//node的输出内存直接赋给npu使用
+        }
         return true;
     }
 
     bool Run(Node * node)
     {
         AclRtSetCurrentContext(context);
-        for(int i = 0; i < inputTensorVec.size(); i++)
+        for (size_t i = 0; i < node->GetInputNum(); ++i)
         {
-            inputTensorVec[i]->data = (uint8_t*)malloc(inputTensorVec[i]->len);
+            const Tensor* input_tensor = node->GetInputTensor(i);
+            uint8_t* input_rawdata = (uint8_t *)get_tensor_mem(input_tensor);
+            inputTensorVec[i]->data = input_rawdata;//上个node输入放入NPU推理的inputtensor中
         }
-        for(int i = 0; i < outputTensorVec.size(); i++)
+
+        for(int i = 0; i < node->GetOutputNum(); ++i)
         {
-            outputTensorVec[i]->data = (uint8_t*)malloc(outputTensorVec[i]->len);
+            const Tensor* output_tensor = node->GetOutputTensor(i);
+            uint8_t* output_rawdata = (uint8_t *)get_tensor_mem(output_tensor);
+            outputTensorVec[i]->data = output_rawdata;//node的输出内存直接赋给npu使用
         }
-        
+
         net->HiForword(inputTensorVec, outputTensorVec, 0);
+
         return true;
     }
 
     bool Postrun(Node* node)
     {   //释放内存，销毁npu资源
         AclRtSetCurrentContext(context);
-        for(int i = 0; i < inputTensorVec.size(); i++)
-        {
-            free(inputTensorVec[i]->data); 
-        }
-        for(int i = 0; i < outputTensorVec.size(); i++)
-        {
-            free(outputTensorVec[i]->data);
-        }
 
         if(net != nullptr)
         {

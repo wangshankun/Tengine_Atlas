@@ -18,6 +18,5 @@ popd
 
 export LD_LIBRARY_PATH=./build-linux/install/lib/:/usr/local/lib/:$LD_LIBRARY_PATH
 
-./build-linux/examples/atlas_run  -p test.prototxt  -m test.caffemodel
-
+./build-linux/examples/atlas_run  -p cnn_ctc_sx/cnn_ctc.prototxt  -i ../OcrSamples/OcrLib/dist/cnnctc_input_batch32.bin
 
