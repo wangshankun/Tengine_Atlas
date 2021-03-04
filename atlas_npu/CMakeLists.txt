@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 
+set(CMAKE_CXX_STANDARD 14)
 
 add_library(atlas800 SHARED IMPORTED)
 set_property(TARGET atlas800 PROPERTY IMPORTED_LOCATION

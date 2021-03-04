@@ -66,10 +66,6 @@ struct AtlasOps : public NodeOps
         std::string dir_path = config_name.substr(0, dir_pos);
 
         InitAcl(dir_path + "/acl.json");
-        AclInitial(deviceId, context);
-
-        AclRtSetCurrentContext(context);
-
         net = new HiInterface(config_name); 
         int ret = net->HiInit(inputTensorVec, outputTensorVec);
         if (ret != 0) {
@@ -89,7 +85,6 @@ struct AtlasOps : public NodeOps
             int in_w = in_shape.GetW();
             int in_size = in_c * in_h * in_w * in_n * type_size;
             assert(in_size  == inputTensorVec[i]->len);
-            //inputTensorVec[i]->data = input_rawdata;//上个node输入放入NPU推理的inputtensor中
         }
 
         for(int i = 0; i < node->GetOutputNum(); ++i)
@@ -104,14 +99,12 @@ struct AtlasOps : public NodeOps
             int out_w = out_shape.GetW();
             int out_size = out_n* out_c * out_h * out_w * type_size;
             assert(out_size == outputTensorVec[i]->len);
-	    //outputTensorVec[i]->data = output_rawdata;//node的输出内存直接赋给npu使用
         }
         return true;
     }
 
     bool Run(Node * node)
     {
-        AclRtSetCurrentContext(context);
         for (size_t i = 0; i < node->GetInputNum(); ++i)
         {
             const Tensor* input_tensor = node->GetInputTensor(i);
@@ -126,21 +119,17 @@ struct AtlasOps : public NodeOps
             outputTensorVec[i]->data = output_rawdata;//node的输出内存直接赋给npu使用
         }
 
-        net->HiForword(inputTensorVec, outputTensorVec, 0);
+        net->HiForword(inputTensorVec, outputTensorVec);
 
         return true;
     }
 
     bool Postrun(Node* node)
     {   //释放内存，销毁npu资源
-        AclRtSetCurrentContext(context);
-
         if(net != nullptr)
         {
             net->HiDestory();
         }
-        
-        AclDestroy(deviceId, context);
 
         ReleaseAcl();
         return true;

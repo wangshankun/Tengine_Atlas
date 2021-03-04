@@ -18,19 +18,16 @@ void SetLogLevel(uint32_t level);
 int ChangeToDstDir(std::string path);
 int InitAcl(std::string acl_cfg);
 int ReleaseAcl();
-int AclInitial(int deviceId, aclrtContext &context);
-int AclDestroy(int deviceId, aclrtContext &context);
-void AclRtSetCurrentContext(aclrtContext &context);
 
 class HiInterface {
 public:
     HiInterface(std::string configPath);
     ~HiInterface() {};
-    void HiDestory();
+    APP_ERROR HiDestory();
     APP_ERROR HiInit(std::vector<std::shared_ptr<HiTensor>> &inputVec, 
                                     std::vector<std::shared_ptr<HiTensor>> &outputVec);
-    APP_ERROR HiForword(std::vector<std::shared_ptr<HiTensor>> inputVec,
-                                    std::vector<std::shared_ptr<HiTensor>> outputVec, size_t dynamicBatchSize = 0);
+    APP_ERROR HiForword(std::vector<std::shared_ptr<HiTensor>> &inputVec,
+                                    std::vector<std::shared_ptr<HiTensor>> &outputVec, size_t dynamicBatchSize = 0);
     APP_ERROR SoftmaxTopkInit(std::shared_ptr<HiTensor>& input_tensor,
                               std::shared_ptr<HiTensor>& output_tensor,
                               int top_k,  int cpu_thread_num);

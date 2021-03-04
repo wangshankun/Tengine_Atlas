@@ -42,6 +42,7 @@ public:
     int ModelInference(std::vector<void *> &inputBufs, std::vector<size_t> &inputSizes, std::vector<void *> &ouputBufs,
         std::vector<size_t> &outputSizes, size_t dynamicBatchSize = 0);
     int ModelInference(size_t dynamicBatchSize = 0);
+    int ConfirmContext();
     aclmdlDesc *GetModelDesc();
 
     APP_ERROR GetHiTensorIO(std::vector<std::shared_ptr<HiTensor>> &inputVec,
@@ -72,3 +73,4 @@ private:
 };
 
 #endif
+

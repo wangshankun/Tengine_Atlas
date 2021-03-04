@@ -21,6 +21,7 @@ layer {
   top: "lstm/ip2:0"
   atlas_param {
       model_name: "/root/Tengine_Atlas/cnn_ctc_sx/setup.config"
+      #runtime_lib: "/root/Tengine_Atlas/cnn_ctc_sx/libcnn_ctc.so"
       total_output_layer_nums: 2
       output_shape {
           dim: 75

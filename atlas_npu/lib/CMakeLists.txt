@@ -2,6 +2,8 @@
 
 # CMake lowest version requirement
 cmake_minimum_required(VERSION 3.5.1)
+
+set(CMAKE_CXX_STANDARD 14)
 # Add definitions ENABLE_DVPP_INTERFACE to use dvpp api
 add_definitions(-DENABLE_DVPP_INTERFACE)
 # project information
@@ -50,9 +52,6 @@ set(ACL_INC_DIR $ENV{ASCEND_HOME}/${ASCEND_VERSION}/${ARCH_PATTERN}/acllib/inclu
 set(ACL_LIB_DIR $ENV{ASCEND_HOME}/${ASCEND_VERSION}/${ARCH_PATTERN}/acllib/lib64/stub)
 
 # Header path
-message("########################3#####################")
-message(${ASCEND_BASE_DIR})
-message("########################3#####################")
 # Src path
 aux_source_directory(${PROJECT_SRC_ROOT}/atlas800 Atlas800_SRC_FILES)
 

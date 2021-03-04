@@ -59,46 +59,6 @@ int ReleaseAcl()
     return ret;
 }
 
-int AclInitial(int deviceId, aclrtContext &context)
-{
-    aclError ret = aclrtSetDevice(deviceId);
-    if (ret != ACL_ERROR_NONE) {
-        printf("aclrtSetDevice failed, ret=%d, deviceId=%d.\n", ret, deviceId);
-        return ret;
-    }
-
-    ret = aclrtCreateContext(&context, deviceId);
-    if (ret != ACL_ERROR_NONE) {
-        printf("aclrtCreateContext failed, ret=%d.\n", ret);
-        return ret;
-    }
-
-    return ret;
-}
-
-
-int AclDestroy(int deviceId, aclrtContext &context)
-{
-    aclError ret = aclrtResetDevice(deviceId);
-    if (ret != ACL_ERROR_NONE)
-    {
-        printf("aclrtResetDevice failed, ret=%d.\n", ret);
-        return ret;
-    }
-    ret = aclrtDestroyContext(context);
-    if (ret != ACL_ERROR_NONE)
-    {
-        printf("aclrtDestroyContext failed, ret=%d.\n", ret);
-        return ret;
-    }
-    return ACL_ERROR_NONE;
-}
-
-void AclRtSetCurrentContext(aclrtContext &context)
-{
-    aclrtSetCurrentContext(context);
-}
-
 APP_ERROR ReadConfig(const std::string configPath, ModelInfo& modelInfo)
 {
     ConfigParser configData;
@@ -180,13 +140,20 @@ HiInterface::HiInterface(std::string configPath)
     
 }
 
-void HiInterface::HiDestory()
+
+int HiInterface::HiDestory()
 {
-    // Destroy resources of modelProcess_
-    modelProcess_->DeInit();
+    APP_ERROR sf_ret;
+    APP_ERROR net_ret;
     if(nullptr != softmax_out_ || nullptr != argmax_out_)
     {
-        SoftmaxTopkExit();
+        sf_ret = SoftmaxTopkExit();
+    }
+    // Destroy resources of modelProcess_
+    net_ret = modelProcess_->DeInit();//DeInit实现中加入了context的confirm,这个层面不需要再做
+    if (sf_ret != APP_ERR_OK || net_ret != APP_ERR_OK) {
+        LogError << "HiDestory Failed";
+        return -1;
     }
 }
 
@@ -234,10 +201,18 @@ APP_ERROR HiInterface::HiInit(std::vector<std::shared_ptr<HiTensor>> &inputVec,
 }
 
 
-APP_ERROR HiInterface::HiForword(std::vector<std::shared_ptr<HiTensor>> inputVec,
-                                    std::vector<std::shared_ptr<HiTensor>> outputVec, size_t dynamicBatchSize)
+APP_ERROR HiInterface::HiForword(std::vector<std::shared_ptr<HiTensor>> &inputVec,
+                                    std::vector<std::shared_ptr<HiTensor>> &outputVec, size_t dynamicBatchSize)
 {
     APP_ERROR ret;
+
+    // 有时候HiForword和HiInit不在一个线程中，
+    // 因此要在aclrtMemcpy操作之前再次确保modelcontext是同一个
+    ret = modelProcess_->ConfirmContext();
+    if (ret != APP_ERR_OK) {
+        LogError << "Failed to ConfirmContext, ret = " << ret << ".";
+        return ret;
+    }
 
     for (int i = 0; i < inputVec.size(); i++)
     {
@@ -334,3 +309,4 @@ APP_ERROR HiInterface::SoftmaxTopkExec(std::shared_ptr<HiTensor>& input_tensor,
 
     return APP_ERR_OK;
 }
+

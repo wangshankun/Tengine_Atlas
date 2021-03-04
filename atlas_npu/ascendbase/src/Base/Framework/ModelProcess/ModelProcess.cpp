@@ -52,14 +52,25 @@ int ModelProcess::ModelInference(size_t dynamicBatchSize)
     return ModelInference(inputBuffers_, inputSizes_, outputBuffers_, outputSizes_, dynamicBatchSize);
 }
 
+int ModelProcess::ConfirmContext()
+{
+    APP_ERROR ret = aclrtSetCurrentContext(contextModel_);
+    if (ret != APP_ERR_OK) {
+        LogError << "ModelProcess::ConfirmContext Failed to set the acl context, ret = " << ret << ".";
+        return ret;
+    }
+    return ret;
+}
+
 int ModelProcess::ModelInference(std::vector<void *> &inputBufs, std::vector<size_t> &inputSizes,
     std::vector<void *> &ouputBufs, std::vector<size_t> &outputSizes, size_t dynamicBatchSize)
 {
     LogDebug << "ModelProcess:Begin to inference.";
 
+    //多线程情况下，防止ModelInference和init不在一个contextModel_中
     APP_ERROR ret = aclrtSetCurrentContext(contextModel_);
     if (ret != APP_ERR_OK) {
-        LogError << "Failed to set the acl context, ret = " << ret << ".";
+        LogError << "ModelProcess::ModelInference Failed to set the acl context, ret = " << ret << ".";
         return ret;
     }
 
@@ -106,8 +117,15 @@ int ModelProcess::ModelInference(std::vector<void *> &inputBufs, std::vector<siz
 int ModelProcess::DeInit()
 {
     LogInfo << "ModelProcess:Begin to deinit instance.";
+    //多线程情况下，防止DeInit和init不在一个contextModel_中
+    APP_ERROR ret = aclrtSetCurrentContext(contextModel_);
+    if (ret != APP_ERR_OK) {
+        LogError << "ModelProcess::DeInit Failed to set the acl context, ret = " << ret << ".";
+        return ret;
+    }
+
     isDeInit_ = true;
-    APP_ERROR ret = aclmdlUnload(modelId_);
+    ret = aclmdlUnload(modelId_);
     if (ret != APP_ERR_OK) {
         LogError << "aclmdlUnload  failed, ret["<< ret << "].";
         return ret;
@@ -195,7 +213,7 @@ APP_ERROR ModelProcess::Init(ModelInfo modelInfo)
 
     ret = aclrtSetCurrentContext(contextModel_);
     if (ret != APP_ERR_OK) {
-        LogError << "Failed to set the acl context, ret = " << ret << ".";
+        LogError << "ModelProcess::Init Failed to set the acl context, ret = " << ret << ".";
         return ret;
     }
 
@@ -242,7 +260,7 @@ APP_ERROR ModelProcess::Init(ModelInfo modelInfo)
     }
     ret = aclrtGetCurrentContext(&contextModel_);
     if (ret != APP_ERR_OK) {
-        LogError << "aclrtMalloc weight_ptr failed, ret[" << ret << "].";
+        LogError << "aclrtGetCurrentContext weight_ptr failed, ret[" << ret << "].";
         return ret;
     }
     // get input and output size
@@ -465,3 +483,4 @@ APP_ERROR ModelProcess::GetHiTensorIO(std::vector<std::shared_ptr<HiTensor>> &in
 
     return APP_ERR_OK;
 }
+
