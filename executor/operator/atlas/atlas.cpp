@@ -22,11 +22,10 @@
 #include "tengine_c_api.h"
 #include "data_type.hpp"
 
-#include "atlas800_extern.h"
 #include <algorithm>
-
-
 #include <assert.h>
+#include <dlfcn.h>
+#include "config_parser.h"
 
 #define gettid() syscall(__NR_gettid)
 
@@ -41,6 +40,66 @@
   }\
 }
 
+using namespace std;
+
+typedef enum {
+    HI_ACL_DT_UNDEFINED = -1,
+    HI_ACL_FLOAT = 0,
+    HI_ACL_FLOAT16 = 1,
+    HI_ACL_INT8 = 2,
+    HI_ACL_INT32 = 3,
+    HI_ACL_UINT8 = 4,
+    HI_ACL_INT16 = 6,
+    HI_ACL_UINT16 = 7,
+    HI_ACL_UINT32 = 8,
+    HI_ACL_INT64 = 9,
+    HI_ACL_UINT64 = 10,
+    HI_ACL_DOUBLE = 11,
+    HI_ACL_BOOL = 12,
+} hiAclDataType;
+
+//from acl/acl_base.h aclFormat
+typedef enum {
+    HI_ACL_FORMAT_UNDEFINED = -1,
+    HI_ACL_FORMAT_NCHW = 0,
+    HI_ACL_FORMAT_NHWC = 1,
+    HI_ACL_FORMAT_ND = 2,
+    HI_ACL_FORMAT_NC1HWC0 = 3,
+    HI_ACL_FORMAT_FRACTAL_Z = 4,
+    HI_ACL_FORMAT_FRACTAL_NZ = 29,
+} hiAclFormat;
+
+struct HiTensor {
+    uint32_t      n;
+    uint32_t      c;
+    uint32_t      h;
+    uint32_t      w;
+    hiAclDataType type;     //aclDataType
+    hiAclFormat   format;   //aclFormat
+    uint32_t      len;
+    std::string   name;
+    uint8_t*      data;
+};
+
+
+class RunTime
+{
+public:
+    RunTime() {}
+    virtual ~RunTime() {}
+
+    virtual int Preprocess(string configName,
+                           vector<shared_ptr<HiTensor>> &inputVec,
+                           vector<shared_ptr<HiTensor>> &outputVec) = 0;
+
+    virtual int Forword(vector<shared_ptr<HiTensor>> &inputVec,
+                        vector<shared_ptr<HiTensor>> &outputVec) = 0;
+
+    virtual int Postprocess() = 0;
+};
+
+typedef RunTime* (*creator_exec)();
+
 namespace TEngine
 {
 
@@ -49,27 +108,45 @@ namespace AtlasImpl
 
 struct AtlasOps : public NodeOps
 {
-    HiInterface* net;
     vector<shared_ptr<HiTensor>>  inputTensorVec;
     vector<shared_ptr<HiTensor>>  outputTensorVec;
-    int deviceId = 0;
-    aclrtContext context = nullptr;
-    
+    RunTime *exec = NULL; 
     bool Prerun(Node* node)
     {
         AtlasNode* atlas_op = dynamic_cast<AtlasNode*>(node->GetOp());
         AtlasParam* atlas_param = atlas_op->GetParam();
         printf("[AtlasOps]Run: threadID=%ld, pid=%ld\n", gettid(), (long int)getpid());
-        std::string config_name = atlas_param->model_name;
-        //加载模型
-        std::size_t dir_pos  = config_name.find_last_of("/");
-        std::string dir_path = config_name.substr(0, dir_pos);
+        std::string config_path = atlas_param->model_name;
 
-        InitAcl(dir_path + "/acl.json");
-        net = new HiInterface(config_name); 
-        int ret = net->HiInit(inputTensorVec, outputTensorVec);
+	ConfigParser configData;
+        if (configData.ParseConfig(config_path) != 0) {
+            printf("ParseConfig Faild! \r\n");
+            return false;
+        }
+	int ret;
+        std::string runlib_path;
+        if (ret != configData.GetStringValue("runlib_path", runlib_path)) {
+            printf("can't get runlib_path, please check \r\n");
+            return false;
+        }
+
+	void *handle = dlopen(runlib_path.c_str(), RTLD_LAZY);
+        if(handle == NULL) {
+            printf("error dlopen - %s \r\n", dlerror());
+            return false;
+        }
+
+	char * dl_error;
+	creator_exec create = (creator_exec)dlsym(handle, "CreateRunTime");
+	if((dl_error = dlerror()) != NULL) {
+	    printf("find sym error %s \r\n", dl_error);
+            return false;
+	}
+
+        exec = (*create)();
+        ret = exec->Preprocess(config_path, inputTensorVec, outputTensorVec);
         if (ret != 0) {
-            printf("Failed to init \r\n");
+            printf("Failed to exec Preprocess\r\n");
             return false;
         }
 
@@ -119,19 +196,21 @@ struct AtlasOps : public NodeOps
             outputTensorVec[i]->data = output_rawdata;//node的输出内存直接赋给npu使用
         }
 
-        net->HiForword(inputTensorVec, outputTensorVec);
-
+        int ret = exec->Forword(inputTensorVec, outputTensorVec);
+        if (ret != 0) {
+            printf("Failed to exec Forword \r\n");
+            return false;
+        }
         return true;
     }
 
     bool Postrun(Node* node)
-    {   //释放内存，销毁npu资源
-        if(net != nullptr)
-        {
-            net->HiDestory();
+    {
+        int ret = exec->Postprocess();
+        if (ret != 0) {
+            printf("Failed to exec Postprocess \r\n");
+            return false;
         }
-
-        ReleaseAcl();
         return true;
     }
 };

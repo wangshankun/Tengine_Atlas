@@ -5,5 +5,5 @@ mkdir build
 cd build
 cmake .. 
 make
-./main /root/Tengine_Atlas/resnet_50/setup.config
+./main
 cd -

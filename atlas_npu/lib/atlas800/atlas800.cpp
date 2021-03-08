@@ -143,8 +143,8 @@ HiInterface::HiInterface(std::string configPath)
 
 int HiInterface::HiDestory()
 {
-    APP_ERROR sf_ret;
-    APP_ERROR net_ret;
+    APP_ERROR sf_ret  = APP_ERR_OK;
+    APP_ERROR net_ret = APP_ERR_OK;
     if(nullptr != softmax_out_ || nullptr != argmax_out_)
     {
         sf_ret = SoftmaxTopkExit();

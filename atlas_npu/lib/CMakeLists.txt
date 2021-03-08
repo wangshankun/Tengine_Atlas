@@ -62,19 +62,26 @@ file(GLOB_RECURSE src_asm "${PROJECT_SRC_ROOT}/cpu_ops/*.S")
 #endforeach()
 
 aux_source_directory(${PROJECT_SRC_ROOT}/cpu_ops CpuOps_SRC_FILES)
-# add host lib path
+
 link_directories(${ACL_LIB_DIR})
+
+include_directories(${ACL_INC_DIR}
+	         ${ASCEND_BASE_DIR}
+		 ${ASCEND_BASE_DIR}/Framework
+		 ${PROJECT_SRC_ROOT}/include
+		 ${PROJECT_SRC_ROOT}/t_invasive)
+
 add_library(atlas800 SHARED
                      ${src_asm}
                      ${CpuOps_SRC_FILES}
                      ${Atlas800_SRC_FILES}
                      ${ASCEND_BASE_SRC_FILES})
-target_include_directories(atlas800 PRIVATE
-	                   ${ACL_INC_DIR}
-	                   ${ASCEND_BASE_DIR}
-			   ${ASCEND_BASE_DIR}/Framework
-			   ${PROJECT_SRC_ROOT}/include)
 target_link_libraries(atlas800 ascendcl acl_dvpp pthread -Wl,-z,relro,-z,now)
+
+
+add_library(t_invasive SHARED ${PROJECT_SRC_ROOT}/t_invasive/tlib.cpp)
+target_compile_options(t_invasive PRIVATE -fPIC -rdynamic -shared)
+target_link_libraries(t_invasive atlas800) 
 
 
 #add_executable(main ${PROJECT_SRC_ROOT}/main.cpp)
