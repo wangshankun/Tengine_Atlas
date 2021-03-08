@@ -13,6 +13,8 @@
 
 ### 类似扩展下去可以整洁的支持更多的NPU，目前只是那华为atlas试水
 
+### Tengine 支持的算子 http://www.tengine.org.cn/jishu.php?class_id=102103
+
 #### 贴一下增加一个op需要的改动，作为后来扩展的参考，sha1是9f3e0fae3137d420ff7afa8791ea77ec2b10d48f
 #### https://github.com/wangshankun/Tengine_Atlas/commit/9f3e0fae3137d420ff7afa8791ea77ec2b10d48f
 
